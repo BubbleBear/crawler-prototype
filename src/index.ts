@@ -1,8 +1,12 @@
 import Fetcher from './fetcher';
+import { extract } from './url';
 
 (async () => {
-    const fetcher = new Fetcher('https://www.zhihu.com');
+    const fetcher = new Fetcher('http://www.xiaomi.com');
 
-    const res = await fetcher.fetch();
-    console.log(res.toString());
+    let res: any = await fetcher.fetch();
+
+    res = extract(res.toString());
+
+    console.log(res)
 })()

@@ -46,10 +46,10 @@ export default class Fetcher extends EventEmitter {
         });
     }
 
-    public async fetch() {
+    public async fetch(): Promise<Buffer> {
         this.request.end();
 
-        return new Promise((resolve, reject) => {
+        return new Promise<Buffer>((resolve, reject) => {
             this.once('end', (buffer) => {
                 resolve(buffer);
             });
@@ -63,6 +63,8 @@ export default class Fetcher extends EventEmitter {
 
     onResponseEnd() {
         const location = this.response!.headers.location;
+
+        // console.log(this.response!.headers)
 
         if (location) {
             this.emit('end', new Promise(async (resolve, reject) => {
