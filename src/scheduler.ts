@@ -28,6 +28,8 @@ export default class Scheduler {
 
     depth?: number;
 
+    visited: Set<string> = new Set;
+
     constructor(seeds: string[], depth?: number, parallelSize: number = 5) {
         this.depth = depth;
         this.parallelSize = parallelSize;
@@ -38,9 +40,9 @@ export default class Scheduler {
     public dispatch(count: number = this.parallelSize, offset: number = 0) {
         this.runningTasks = this.runningTasks.filter(task => task.status === taskStatus.running);
 
-        const todoTasks = this.pendingTasks
-        .filter(task => this.depth && task.depth < this.depth || true)
-        .splice(offset, count - this.runningTasks.length);
+        this.pendingTasks = this.pendingTasks.filter(task => typeof this.depth === 'number' && task.depth < this.depth || true)
+        
+        const todoTasks = this.pendingTasks.splice(offset, count - this.runningTasks.length);
 
         todoTasks.forEach(task => {
             this.runningTasks.push(task);
@@ -57,7 +59,7 @@ export default class Scheduler {
             task.status = taskStatus.done;
 
             extract(docString).forEach(url => {
-                this.pendingTasks.push(
+                !this.visited.has(url) && this.visited.add(url) && this.pendingTasks.push(
                     this.newTask(url, task.depth + 1)
                 );
             });
@@ -83,7 +85,7 @@ export default class Scheduler {
         };
     }
 
-    async handler(document: string, url: string) {
+    handler(document: string, url: string) {
         ;
     }
 }

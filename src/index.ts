@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
 
 (async () => {
     const schd = new Scheduler([
-        'http://www.xiaomi.com',
+        'http://www.zhihu.com',
     ], 2);
 
     schd.handler = async (document: string, url: string) => {
