@@ -67,7 +67,7 @@ export default class Fetcher extends EventEmitter {
         // console.log(this.response!.headers)
 
         if (location) {
-            this.emit('end', new Promise(async (resolve, reject) => {
+            return this.emit('end', new Promise(async (resolve, reject) => {
                 resolve(new Fetcher(location, this.options).fetch());
             }))
         }
