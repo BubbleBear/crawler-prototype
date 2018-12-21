@@ -4,6 +4,8 @@ import { parse } from 'url';
 import { EventEmitter } from 'events';
 
 export default class Fetcher extends EventEmitter {
+    public url: string;
+
     request: http.ClientRequest;
 
     response?: http.IncomingMessage;
@@ -12,9 +14,12 @@ export default class Fetcher extends EventEmitter {
 
     buffer: Buffer[] = [];
 
+    errorBuffer: Error[] = [];
+
     constructor(url: string, opt?: object) {
         super();
 
+        this.url = url;
         this.options = opt;
 
         const requestOpt: https.RequestOptions = Object.assign({
@@ -29,24 +34,32 @@ export default class Fetcher extends EventEmitter {
                 this.request = http.request(requestOpt);
         }
 
-        this.request.once('response', (response: http.IncomingMessage) => {
+        this.request
+        .once('response', (response: http.IncomingMessage) => {
             this.response = response;
             this.emit('response');
+        })
+        .on('error', (err) => {
+            this.errorBuffer.push(err);
         });
 
         this.once('response', () => {
             this.response!
-                .on('data', (chunk: Buffer) => {
-                    this.buffer.push(chunk);
-                })
-                .once('end', this.onResponseEnd.bind(this))
-                .on('error', (err) => {
-                    this.emit('error', err);
-                })
+            .on('data', (chunk: Buffer) => {
+                this.buffer.push(chunk);
+            })
+            .once('end', this.onResponseEnd.bind(this))
+            .on('error', (err) => {
+                this.errorBuffer.push(err);
+            });
         });
     }
 
     public async fetch(): Promise<Buffer> {
+        this.errorBuffer.forEach(error => {
+            this.emit('error', error);
+        });
+
         this.request.end();
 
         return new Promise<Buffer>((resolve, reject) => {
