@@ -53,6 +53,8 @@ export default class Scheduler {
     runTask(task: Task) {
         task.status = taskStatus.running;
 
+        console.log(task.depth)
+
         task.fetcher
         .once('end', async (document: Buffer | Promise<Buffer>) => {
             const docString = (await document).toString();
