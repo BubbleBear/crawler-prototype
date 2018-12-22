@@ -3,6 +3,8 @@ import * as https from 'https';
 import { parse } from 'url';
 import { EventEmitter } from 'events';
 
+import { URL2Object } from './url';
+
 export interface Options extends https.RequestOptions {
     
 }
@@ -26,16 +28,18 @@ export default class Fetcher extends EventEmitter {
         this.url = url;
         this.options = options;
 
-        const requestOpt: https.RequestOptions = Object.assign({
+        const requestOptions: https.RequestOptions = Object.assign(
+            {},
+            parse(this.url),
+            options
+        );
 
-        }, parse(url), options);
-
-        switch (requestOpt.protocol) {
+        switch (requestOptions.protocol) {
             case 'https:':
-                this.request = https.request(requestOpt);
+                this.request = https.request(requestOptions);
                 break;
             default:
-                this.request = http.request(requestOpt);
+                this.request = http.request(requestOptions);
         }
 
         this.request
@@ -43,8 +47,8 @@ export default class Fetcher extends EventEmitter {
             this.response = response;
             this.emit('response');
         })
-        .on('error', (err) => {
-            this.errorBuffer.push(err);
+        .on('error', (error) => {
+            this.errorBuffer.push(error);
         });
 
         this.once('response', () => {
@@ -53,8 +57,8 @@ export default class Fetcher extends EventEmitter {
                 this.buffer.push(chunk);
             })
             .once('end', this.onResponseEnd.bind(this))
-            .on('error', (err) => {
-                this.errorBuffer.push(err);
+            .on('error', (error) => {
+                this.errorBuffer.push(error);
             });
         });
     }
@@ -71,21 +75,29 @@ export default class Fetcher extends EventEmitter {
                 resolve(buffer);
             });
 
-            this.on('error', (err) => {
-                reject(err);
+            this.on('error', (error) => {
+                reject(error);
                 this.request.abort();
             });
         });
     }
 
     onResponseEnd() {
-        const location = this.response!.headers.location;
+        const headers = this.response!.headers;
 
-        // console.log(this.response!.headers)
+        if (headers && headers.location) {
+            const location = headers.location;
 
-        if (location) {
+            const url = '';
+
+            console.log(this.url, location, url)
+
             return this.emit('end', new Promise(async (resolve, reject) => {
-                resolve(new Fetcher(location, this.options).fetch());
+                try {
+                    resolve(new Fetcher(url, this.options).fetch());
+                } catch (error) {
+                    reject(error);
+                }
             }))
         }
 

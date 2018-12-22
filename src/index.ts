@@ -1,5 +1,5 @@
 import Fetcher from './fetcher';
-import { extract } from './url';
+import * as url from 'url';
 import Scheduler, { Task } from './scheduler';
 import * as fs from 'fs';
 import { createHash } from 'crypto';
@@ -9,20 +9,21 @@ import { exec } from 'child_process';
     await exec(`rm ${__dirname}/../data/*`);
 
     const schd = new Scheduler([
-        'http://www.xiaomi.com',
+        // 'http://www.xiaomi.com',
+        'http://shop.test.9now.net',
     ], {
         depth: 2,
         fetcherTimeout: 3000,
         urlFilter: (url: string): boolean => {
-            if (/\.(js)|(css)|(jpg)|(jpeg)|(gif)|(png)$/.test(url)) {
+            if (/\.(js)|(css)|(jpg)|(jpeg)|(gif)|(png)|(mp3)|(mp4)|(pdf)|(swf)$/.test(url)) {
                 return false;
             }
 
             return true;
         },
         handler: (document: string, task: Task) => {
-            console.log(task.url)
-            console.log(task.depth)
+            // console.log(task.url)
+            // console.log(task.depth)
             // console.log(schd.pendingTasks)
             // console.log(schd.runningTasks)
             // console.log(schd.failedTasks)
@@ -31,5 +32,12 @@ import { exec } from 'child_process';
         }
     });
 
-    schd.dispatch();
+    // schd.dispatch();
+
+    const f = new Fetcher('http://shop.test.9now.net',);
+    try {
+        const r = await f.fetch();
+    } catch (e) {
+        console.log(e)
+    }
 })()
