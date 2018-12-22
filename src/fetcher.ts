@@ -3,6 +3,10 @@ import * as https from 'https';
 import { parse } from 'url';
 import { EventEmitter } from 'events';
 
+export interface Options extends https.RequestOptions {
+    
+}
+
 export default class Fetcher extends EventEmitter {
     public url: string;
 
@@ -10,21 +14,21 @@ export default class Fetcher extends EventEmitter {
 
     response?: http.IncomingMessage;
 
-    options?: object;
+    options?: Options;
 
     buffer: Buffer[] = [];
 
     errorBuffer: Error[] = [];
 
-    constructor(url: string, opt?: object) {
+    constructor(url: string, options?: Options) {
         super();
 
         this.url = url;
-        this.options = opt;
+        this.options = options;
 
         const requestOpt: https.RequestOptions = Object.assign({
 
-        }, parse(url), opt);
+        }, parse(url), options);
 
         switch (requestOpt.protocol) {
             case 'https:':

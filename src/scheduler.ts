@@ -10,11 +10,19 @@ enum taskStatus {
 }
 
 export interface Task {
-    url: string,
-    depth: number,
-    status: taskStatus,
-    fetcher: Fetcher,
-    error?: Error,
+    readonly url: string;
+    readonly depth: number;
+    status: taskStatus;
+    readonly fetcher: Fetcher;
+    error?: Error;
+}
+
+export interface Options {
+    depth?: number;
+    parallelSize?: number;
+    fetcherTimeout?: number;
+    urlFilter?(url: string): boolean;
+    handler?(document: string, task: Task): any;
 }
 
 export default class Scheduler {
@@ -24,17 +32,17 @@ export default class Scheduler {
 
     failedTasks: Task[] = [];
 
-    parallelSize: number;
+    parallelSize!: number;
 
     depth?: number;
 
+    fetcherTimeout?: number;
+
     visited: Set<string> = new Set;
 
-    constructor(seeds: string[], depth?: number, parallelSize: number = 5) {
-        this.depth = depth;
-        this.parallelSize = parallelSize;
-
+    constructor(seeds: string[], options: Options = {}) {
         this.pendingTasks = seeds.map(url => this.newTask(url));
+        this.destructOptions(options);
     }
 
     public dispatch(count: number = this.parallelSize, offset: number = 0) {
@@ -53,20 +61,19 @@ export default class Scheduler {
     runTask(task: Task) {
         task.status = taskStatus.running;
 
-        console.log(task.depth)
-
         task.fetcher
         .once('end', async (document: Buffer | Promise<Buffer>) => {
             const docString = (await document).toString();
             task.status = taskStatus.done;
 
             extract(docString).forEach(url => {
-                !this.visited.has(url) && this.visited.add(url) && this.pendingTasks.push(
+                this.urlFilter(url) && !this.visited.has(url) && this.visited.add(url)
+                && this.pendingTasks.push(
                     this.newTask(url, task.depth + 1)
                 );
             });
 
-            this.handler(docString, task.url);
+            this.handler(docString, task);
             this.dispatch();
         })
         .on('error', (err: Error) => {
@@ -83,11 +90,27 @@ export default class Scheduler {
             url,
             depth,
             status: taskStatus.pending,
-            fetcher: new Fetcher(url),
+            fetcher: new Fetcher(url, {
+                timeout: this.fetcherTimeout,
+            }),
         };
     }
 
-    handler(document: string, url: string) {
+    handler(document: string, task: Task) {
         ;
+    }
+
+    urlFilter(url: string): boolean {
+        return true;
+    }
+
+    private destructOptions(options: Options) {
+        ({
+            depth: this.depth,
+            parallelSize: this.parallelSize = 5,
+            fetcherTimeout: this.fetcherTimeout,
+            urlFilter: this.urlFilter,
+            handler: this.handler,
+        } = options as any);
     }
 }
