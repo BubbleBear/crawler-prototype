@@ -10,7 +10,8 @@ import { exec } from 'child_process';
     await exec(`rm ${__dirname}/../data/*`);
 
     const schd = new Scheduler([
-        'http://www.xiaomi.com',
+        // 'http://www.xiaomi.com',
+        'http://www.zhihu.com',
         // 'http://shop.test.9now.net',
     ], {
         depth: 2,
@@ -23,8 +24,8 @@ import { exec } from 'child_process';
             return true;
         },
         handler: (document: string, task: Task) => {
-            // console.log(task.url)
-            // console.log(task.depth)
+            console.log(task.url)
+            console.log(task.depth)
             // console.log(schd.pendingTasks)
             // console.log(schd.runningTasks)
             // console.log(schd.failedTasks)
