@@ -1,16 +1,15 @@
 import * as http from 'http';
 import * as https from 'https';
-import { parse } from 'url';
 import { EventEmitter } from 'events';
 
-import { URL2Object } from './url';
+import { URL2Object, URLObject, parse } from './url';
 
 export interface Options extends https.RequestOptions {
     
 }
 
 export default class Fetcher extends EventEmitter {
-    public url: string;
+    public url: URLObject;
 
     request: http.ClientRequest;
 
@@ -22,16 +21,16 @@ export default class Fetcher extends EventEmitter {
 
     errorBuffer: Error[] = [];
 
-    constructor(url: string, options?: Options) {
+    constructor(url: string | URL | URLObject, options?: Options) {
         super();
 
-        this.url = url;
+        this.url = parse(url);
         this.options = options;
 
         const requestOptions: https.RequestOptions = Object.assign(
             {},
-            parse(this.url),
-            options
+            this.url,
+            options,
         );
 
         switch (requestOptions.protocol) {
@@ -88,9 +87,11 @@ export default class Fetcher extends EventEmitter {
         if (headers && headers.location) {
             const location = headers.location;
 
-            const url = '';
-
-            console.log(this.url, location, url)
+            const url = Object.assign(
+                {},
+                this.url,
+                parse(location),
+            );
 
             return this.emit('end', new Promise(async (resolve, reject) => {
                 try {
