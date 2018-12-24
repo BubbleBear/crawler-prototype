@@ -1,5 +1,4 @@
-import * as url from 'url';
-import Fetcher from './fetcher';
+import Fetcher, { FetcherOptions } from './fetcher';
 import { extract } from './url';
 
 enum taskStatus {
@@ -17,10 +16,10 @@ export interface Task {
     error?: Error;
 }
 
-export interface Options {
+export interface SchedulerOptions {
     depth?: number;
     parallelSize?: number;
-    fetcherTimeout?: number;
+    requestOptions?: FetcherOptions;
     urlFilter?(url: string): boolean;
     handler?(document: string, task: Task): any;
 }
@@ -36,11 +35,11 @@ export default class Scheduler {
 
     depth?: number;
 
-    fetcherTimeout?: number;
+    requestOptions?: FetcherOptions;
 
     visited: Set<string> = new Set;
 
-    constructor(seeds: string[], options: Options = {}) {
+    constructor(seeds: string[], options: SchedulerOptions = {}) {
         this.pendingTasks = seeds.map(url => this.newTask(url));
         this.destructOptions(options);
     }
@@ -90,9 +89,7 @@ export default class Scheduler {
             url,
             depth,
             status: taskStatus.pending,
-            fetcher: new Fetcher(url, {
-                timeout: this.fetcherTimeout,
-            }),
+            fetcher: new Fetcher(url, this.requestOptions),
         };
     }
 
@@ -104,11 +101,11 @@ export default class Scheduler {
         return true;
     }
 
-    private destructOptions(options: Options) {
+    private destructOptions(options: SchedulerOptions) {
         ({
             depth: this.depth,
             parallelSize: this.parallelSize = 5,
-            fetcherTimeout: this.fetcherTimeout,
+            requestOptions: this.requestOptions,
             urlFilter: this.urlFilter,
             handler: this.handler,
         } = options as any);

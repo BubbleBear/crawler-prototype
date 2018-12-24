@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
 
 import { URL2Object, URLObject, parse } from './url';
 
-export interface Options extends https.RequestOptions {
+export interface FetcherOptions extends https.RequestOptions {
     
 }
 
@@ -15,13 +15,13 @@ export default class Fetcher extends EventEmitter {
 
     response?: http.IncomingMessage;
 
-    options?: Options;
+    options?: FetcherOptions;
 
     buffer: Buffer[] = [];
 
     errorBuffer: Error[] = [];
 
-    constructor(url: string | URL | URLObject, options?: Options) {
+    constructor(url: string | URL | URLObject, options?: FetcherOptions) {
         super();
 
         this.url = parse(url);

@@ -11,11 +11,15 @@ import { exec } from 'child_process';
 
     const schd = new Scheduler([
         // 'http://www.xiaomi.com',
-        'http://www.zhihu.com',
-        // 'http://shop.test.9now.net',
+        // 'http://www.boqii.com/',
+        'http://shop.test.9now.net',
     ], {
         depth: 2,
-        fetcherTimeout: 3000,
+        requestOptions: {
+            timeout: 3000,
+            headers: {
+            },
+        },
         urlFilter: (url: string): boolean => {
             if (/\.(js)|(css)|(jpg)|(jpeg)|(gif)|(png)|(mp3)|(mp4)|(pdf)|(swf)$/.test(url)) {
                 return false;
@@ -25,7 +29,6 @@ import { exec } from 'child_process';
         },
         handler: (document: string, task: Task) => {
             console.log(task.url)
-            console.log(task.depth)
             // console.log(schd.pendingTasks)
             // console.log(schd.runningTasks)
             // console.log(schd.failedTasks)
