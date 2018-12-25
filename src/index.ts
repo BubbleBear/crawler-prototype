@@ -12,7 +12,8 @@ import { exec } from 'child_process';
     const schd = new Scheduler([
         // 'http://www.xiaomi.com',
         // 'http://www.boqii.com/',
-        'http://shop.test.9now.net',
+        // 'http://shop.test.9now.net',
+        'asdf'
     ], {
         depth: 2,
         requestOptions: {
@@ -34,6 +35,9 @@ import { exec } from 'child_process';
             // console.log(schd.failedTasks)
             console.log('\n')
             fs.writeFileSync(`./data/${createHash('md5').update(task.url).digest('hex')}`, document);
+        },
+        errorHandler: (error: Error, task: Task) => {
+            console.log(task.url, error);
         }
     });
 

@@ -19,6 +19,8 @@ export default class Fetcher extends EventEmitter {
 
     buffer: Buffer[] = [];
 
+    fetchCalled: Boolean = false;
+
     errorBuffer: Error[] = [];
 
     constructor(url: string | URL | URLObject, options?: FetcherOptions) {
@@ -47,7 +49,7 @@ export default class Fetcher extends EventEmitter {
             this.emit('response');
         })
         .on('error', (error) => {
-            this.errorBuffer.push(error);
+            this.fetchCalled && this.emit('error', error) || this.errorBuffer.push(error);
         });
 
         this.once('response', () => {
@@ -57,12 +59,14 @@ export default class Fetcher extends EventEmitter {
             })
             .once('end', this.onResponseEnd.bind(this))
             .on('error', (error) => {
-                this.errorBuffer.push(error);
+                this.fetchCalled && this.emit('error', error) || this.errorBuffer.push(error);
             });
         });
     }
 
     public async fetch(): Promise<Buffer> {
+        this.fetchCalled = true;
+        
         this.errorBuffer.forEach(error => {
             this.emit('error', error);
         });

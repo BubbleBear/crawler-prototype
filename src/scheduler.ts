@@ -21,7 +21,8 @@ export interface SchedulerOptions {
     parallelSize?: number;
     requestOptions?: FetcherOptions;
     urlFilter?(url: string): boolean;
-    handler?(document: string, task: Task): any;
+    handler?(document: string, task?: Task): any;
+    errorHandler?(error: Error, task?: Task): any;
 }
 
 export default class Scheduler {
@@ -61,7 +62,8 @@ export default class Scheduler {
         task.status = taskStatus.running;
 
         task.fetcher
-        .once('end', async (document: Buffer | Promise<Buffer>) => {
+        .fetch()
+        .then(async (document: Buffer) => {
             const docString = (await document).toString();
             task.status = taskStatus.done;
 
@@ -75,13 +77,14 @@ export default class Scheduler {
             this.handler(docString, task);
             this.dispatch();
         })
-        .on('error', (err: Error) => {
+        .catch((error: Error) => {
             task.status = taskStatus.failed;
-            task.error = err;
+            task.error = error;
             this.failedTasks.push(task);
+
+            this.errorHandler(error, task);
             this.dispatch();
-        })
-        .fetch();
+        });
     }
 
     newTask(url: string, depth: number = 0) {
@@ -94,6 +97,10 @@ export default class Scheduler {
     }
 
     handler(document: string, task: Task) {
+        ;
+    }
+
+    errorHandler(error: Error, task: Task) {
         ;
     }
 
