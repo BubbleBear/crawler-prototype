@@ -114,7 +114,8 @@ export default class Scheduler {
             parallelSize: this.parallelSize = 5,
             requestOptions: this.requestOptions,
             urlFilter: this.urlFilter,
-            handler: this.handler,
+            handler: this.handler = this.handler,
+            errorHandler: this.errorHandler = this.errorHandler,
         } = options as any);
     }
 }
