@@ -13,6 +13,7 @@ import { exec } from 'child_process';
         // 'http://www.xiaomi.com',
         // 'http://www.boqii.com/',
         // 'http://shop.test.9now.net',
+        // 'http://sports.sina.com.cn/',
         'asdf'
     ], {
         depth: 2,
@@ -30,6 +31,7 @@ import { exec } from 'child_process';
         },
         handler: (document: string, task: Task) => {
             console.log(task.url)
+            console.log(task.depth)
             // console.log(schd.pendingTasks)
             // console.log(schd.runningTasks)
             // console.log(schd.failedTasks)
@@ -37,7 +39,7 @@ import { exec } from 'child_process';
             fs.writeFileSync(`./data/${createHash('md5').update(task.url).digest('hex')}`, document);
         },
         errorHandler: (error: Error, task: Task) => {
-            console.log(task.url, error);
+            // console.log(task.url, error);
         }
     });
 

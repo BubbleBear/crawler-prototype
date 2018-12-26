@@ -49,6 +49,7 @@ export default class Fetcher extends EventEmitter {
             this.emit('response');
         })
         .on('error', (error) => {
+            this.request.abort();
             this.fetchCalled && this.emit('error', error) || this.errorBuffer.push(error);
         });
 
