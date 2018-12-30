@@ -13,8 +13,7 @@ import { exec } from 'child_process';
         // 'http://www.xiaomi.com',
         // 'http://www.boqii.com/',
         // 'http://shop.test.9now.net',
-        // 'http://sports.sina.com.cn/',
-        'asdf'
+        'http://sports.sina.com.cn/',
     ], {
         depth: 2,
         requestOptions: {
@@ -29,7 +28,7 @@ import { exec } from 'child_process';
 
             return true;
         },
-        handler: (document: string, task: Task) => {
+        handler: async (document: string, task: Task) => {
             console.log(task.url)
             console.log(task.depth)
             // console.log(schd.pendingTasks)
@@ -37,6 +36,11 @@ import { exec } from 'child_process';
             // console.log(schd.failedTasks)
             console.log('\n')
             fs.writeFileSync(`./data/${createHash('md5').update(task.url).digest('hex')}`, document);
+            await new Promise((resolve => {
+                setTimeout(() => {
+                    resolve(true)
+                }, 1000);
+            }))
         },
         errorHandler: (error: Error, task: Task) => {
             // console.log(task.url, error);

@@ -45,45 +45,47 @@ export default class Scheduler {
         this.destructOptions(options);
     }
 
-    public dispatch(count: number = this.parallelSize, offset: number = 0) {
+    public async dispatch(count: number = this.parallelSize, offset: number = 0) {
         this.runningTasks = this.runningTasks.filter(task => task.status === taskStatus.running);
 
         this.pendingTasks = this.pendingTasks.filter(task => typeof this.depth === 'number' && task.depth < this.depth || true)
         
         const todoTasks = this.pendingTasks.splice(offset, count - this.runningTasks.length);
 
-        todoTasks.forEach(task => {
+        return Promise.all(todoTasks.map(task => {
             this.runningTasks.push(task);
-            this.runTask(task);
-        })
+            return this.runTask(task);
+        }))
     }
 
-    runTask(task: Task) {
+    async runTask(task: Task) {
         task.status = taskStatus.running;
 
-        task.fetcher
-        .fetch()
-        .then(async (document: Buffer) => {
-            const docString = (await document).toString();
-            task.status = taskStatus.done;
+        return new Promise((resolve, reject) => {
+            task.fetcher
+            .fetch()
+            .then(async (document: Buffer) => {
+                const docString = (await document).toString();
+                task.status = taskStatus.done;
 
-            extract(docString).forEach(url => {
-                this.urlFilter(url) && !this.visited.has(url) && this.visited.add(url)
-                && this.pendingTasks.push(
-                    this.newTask(url, task.depth + 1)
-                );
+                extract(docString).forEach(url => {
+                    this.urlFilter(url) && !this.visited.has(url) && this.visited.add(url)
+                    && this.pendingTasks.push(
+                        this.newTask(url, task.depth + 1)
+                    );
+                });
+
+                await this.handler(docString, task);
+                resolve(this.dispatch());
+            })
+            .catch(async (error: Error) => {
+                task.status = taskStatus.failed;
+                task.error = error;
+                this.failedTasks.push(task);
+
+                await this.errorHandler(error, task);
+                resolve(this.dispatch());
             });
-
-            this.handler(docString, task);
-            this.dispatch();
-        })
-        .catch((error: Error) => {
-            task.status = taskStatus.failed;
-            task.error = error;
-            this.failedTasks.push(task);
-
-            this.errorHandler(error, task);
-            this.dispatch();
         });
     }
 
