@@ -23,12 +23,12 @@ import { exec } from 'child_process';
     ], {
         depth: 2,
         requestOptions,
-        newTask: (url: string, depth: number = 0) => {
+        newTask(url: string, depth: number = 0) {
             return {
                 url,
                 depth,
                 status: TaskStatus.pending,
-                fetcher: new Fetcher(url, requestOptions),
+                fetcher: new Fetcher(url, this.requestOptions),
             };
         },
         urlFilter: (url: string): boolean => {
