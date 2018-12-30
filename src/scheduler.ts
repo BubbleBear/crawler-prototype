@@ -9,20 +9,19 @@ export enum TaskStatus {
 }
 
 export interface Task {
-    readonly url: string;
-    readonly depth: number;
     status: TaskStatus;
-    readonly fetcher: Fetcher;
     error?: Error;
+    [prop: string]: any;
 }
 
 export interface SchedulerOptions {
     depth?: number;
     parallelSize?: number;
     requestOptions?: FetcherOptions;
-    urlFilter?(url: string): boolean;
+    newTask?(...args: any[]): Task;
     handler?(document: string, task?: Task): any;
     errorHandler?(error: Error, task?: Task): any;
+    [prop: string]: any;
 }
 
 export default class Scheduler {
@@ -41,8 +40,8 @@ export default class Scheduler {
     visited: Set<string> = new Set;
 
     constructor(seeds: string[], options: SchedulerOptions = {}) {
-        this.pendingTasks = seeds.map(url => this.newTask(url));
         this.destructOptions(options);
+        this.pendingTasks = seeds.map(url => this.newTask(url));
     }
 
     public async dispatch(count: number = this.parallelSize, offset: number = 0) {
@@ -89,12 +88,9 @@ export default class Scheduler {
         });
     }
 
-    newTask(url: string, depth: number = 0) {
+    newTask(...args: any[]): Task {
         return {
-            url,
-            depth,
             status: TaskStatus.pending,
-            fetcher: new Fetcher(url, this.requestOptions),
         };
     }
 
@@ -118,6 +114,7 @@ export default class Scheduler {
             urlFilter: this.urlFilter,
             handler: this.handler = this.handler,
             errorHandler: this.errorHandler = this.errorHandler,
+            newTask: this.newTask = this.newTask,
         } = options as any);
     }
 }

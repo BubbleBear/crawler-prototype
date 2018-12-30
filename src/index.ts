@@ -1,13 +1,19 @@
 import Fetcher from './fetcher';
 import * as u from './url';
 import { URL } from 'url';
-import Scheduler, { Task } from './scheduler';
+import Scheduler, { Task, TaskStatus } from './scheduler';
 import * as fs from 'fs';
 import { createHash } from 'crypto';
 import { exec } from 'child_process';
 
 (async () => {
     await exec(`rm ${__dirname}/../data/*`);
+
+    const requestOptions = {
+        timeout: 3000,
+        headers: {
+        },
+    };
 
     const schd = new Scheduler([
         // 'http://www.xiaomi.com',
@@ -16,10 +22,14 @@ import { exec } from 'child_process';
         'http://sports.sina.com.cn/',
     ], {
         depth: 2,
-        requestOptions: {
-            timeout: 3000,
-            headers: {
-            },
+        requestOptions,
+        newTask: (url: string, depth: number = 0) => {
+            return {
+                url,
+                depth,
+                status: TaskStatus.pending,
+                fetcher: new Fetcher(url, requestOptions),
+            };
         },
         urlFilter: (url: string): boolean => {
             if (/\.(js)|(css)|(jpg)|(jpeg)|(gif)|(png)|(mp3)|(mp4)|(pdf)|(swf)$/.test(url)) {
@@ -44,7 +54,7 @@ import { exec } from 'child_process';
         },
         errorHandler: (error: Error, task: Task) => {
             // console.log(task.url, error);
-        }
+        },
     });
 
     schd.dispatch();
