@@ -1,7 +1,7 @@
 import Fetcher, { FetcherOptions } from './fetcher';
 import { extract } from './url';
 
-enum taskStatus {
+export enum TaskStatus {
     pending,
     running,
     done,
@@ -11,7 +11,7 @@ enum taskStatus {
 export interface Task {
     readonly url: string;
     readonly depth: number;
-    status: taskStatus;
+    status: TaskStatus;
     readonly fetcher: Fetcher;
     error?: Error;
 }
@@ -46,7 +46,7 @@ export default class Scheduler {
     }
 
     public async dispatch(count: number = this.parallelSize, offset: number = 0) {
-        this.runningTasks = this.runningTasks.filter(task => task.status === taskStatus.running);
+        this.runningTasks = this.runningTasks.filter(task => task.status === TaskStatus.running);
 
         this.pendingTasks = this.pendingTasks.filter(task => typeof this.depth === 'number' && task.depth < this.depth || true)
         
@@ -59,14 +59,14 @@ export default class Scheduler {
     }
 
     async runTask(task: Task) {
-        task.status = taskStatus.running;
+        task.status = TaskStatus.running;
 
         return new Promise((resolve, reject) => {
             task.fetcher
             .fetch()
             .then(async (document: Buffer) => {
                 const docString = (await document).toString();
-                task.status = taskStatus.done;
+                task.status = TaskStatus.done;
 
                 extract(docString).forEach(url => {
                     this.urlFilter(url) && !this.visited.has(url) && this.visited.add(url)
@@ -79,7 +79,7 @@ export default class Scheduler {
                 resolve(this.dispatch());
             })
             .catch(async (error: Error) => {
-                task.status = taskStatus.failed;
+                task.status = TaskStatus.failed;
                 task.error = error;
                 this.failedTasks.push(task);
 
@@ -93,7 +93,7 @@ export default class Scheduler {
         return {
             url,
             depth,
-            status: taskStatus.pending,
+            status: TaskStatus.pending,
             fetcher: new Fetcher(url, this.requestOptions),
         };
     }
