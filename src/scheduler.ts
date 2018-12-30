@@ -88,6 +88,15 @@ export default class Scheduler {
         });
     }
 
+    destroy() {
+        this.pendingTasks = [];
+        this.dispatch = (...args: any[]) => {
+            return new Promise((resolve) => {
+                resolve(true as any);
+            });
+        };
+    }
+
     newTask(...args: any[]): Task {
         return {
             status: TaskStatus.pending,
