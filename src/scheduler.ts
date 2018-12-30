@@ -10,6 +10,7 @@ export enum TaskStatus {
 
 export interface Task {
     status: TaskStatus;
+    handle(task: Task): Promise<any>;
     error?: Error;
     [prop: string]: any;
 }
@@ -61,8 +62,7 @@ export default class Scheduler {
         task.status = TaskStatus.running;
 
         return new Promise((resolve, reject) => {
-            task.fetcher
-            .fetch()
+            task.handle(task)
             .then(async (document: Buffer) => {
                 const docString = (await document).toString();
                 task.status = TaskStatus.done;
@@ -100,6 +100,7 @@ export default class Scheduler {
     newTask(...args: any[]): Task {
         return {
             status: TaskStatus.pending,
+            handle: (task: Task) => new Promise(() => {}),
         };
     }
 

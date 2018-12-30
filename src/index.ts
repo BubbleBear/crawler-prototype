@@ -26,6 +26,7 @@ import { exec } from 'child_process';
         newTask(url: string, depth: number = 0) {
             return {
                 url,
+                handle: (task) => task.fetcher.fetch(),
                 depth,
                 status: TaskStatus.pending,
                 fetcher: new Fetcher(url, this.requestOptions),
