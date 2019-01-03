@@ -80,7 +80,6 @@ export default class Scheduler {
             .catch(async (error: Error) => {
                 task.status = TaskStatus.failed;
                 task.error = error;
-                this.failedTasks.push(task);
 
                 await this.errorHandler(error, task);
                 resolve(this.dispatch());
