@@ -39,7 +39,7 @@ import { exec } from 'child_process';
 
             return true;
         },
-        handler: async (document: string, task: Task) => {
+        ondone: async (document: string, task: Task) => {
             console.log(task.url)
             console.log(task.depth)
             // console.log(schd.pendingTasks)
@@ -53,7 +53,7 @@ import { exec } from 'child_process';
                 }, 1000);
             }))
         },
-        errorHandler: (error: Error, task: Task) => {
+        onerror: (error: Error, task: Task) => {
             // console.log(task.url, error);
         },
     });

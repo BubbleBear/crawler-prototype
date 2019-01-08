@@ -20,8 +20,8 @@ export interface SchedulerOptions {
     parallelSize?: number;
     requestOptions?: FetcherOptions;
     newTask?(...args: any[]): Task;
-    handler?(document: string, task?: Task): any;
-    errorHandler?(error: Error, task?: Task): any;
+    ondone?(document: string, task?: Task): any;
+    onerror?(error: Error, task?: Task): any;
     [prop: string]: any;
 }
 
@@ -55,7 +55,7 @@ export default class Scheduler {
         return Promise.all(todoTasks.map(task => {
             this.runningTasks.push(task);
             return this.runTask(task);
-        }))
+        }));
     }
 
     async runTask(task: Task) {
@@ -74,14 +74,14 @@ export default class Scheduler {
                     );
                 });
 
-                await this.handler(docString, task);
+                await this.ondone(docString, task);
                 resolve(this.dispatch());
             })
             .catch(async (error: Error) => {
                 task.status = TaskStatus.failed;
                 task.error = error;
 
-                await this.errorHandler(error, task);
+                await this.onerror(error, task);
                 resolve(this.dispatch());
             });
         });
@@ -103,11 +103,11 @@ export default class Scheduler {
         };
     }
 
-    handler(document: string, task: Task) {
+    ondone(document: string, task: Task) {
         ;
     }
 
-    errorHandler(error: Error, task: Task) {
+    onerror(error: Error, task: Task) {
         ;
     }
 
@@ -121,8 +121,8 @@ export default class Scheduler {
             parallelSize: this.parallelSize = 5,
             requestOptions: this.requestOptions,
             urlFilter: this.urlFilter,
-            handler: this.handler = this.handler,
-            errorHandler: this.errorHandler = this.errorHandler,
+            ondone: this.ondone = this.ondone,
+            onerror: this.onerror = this.onerror,
             newTask: this.newTask = this.newTask,
         } = options as any);
     }
