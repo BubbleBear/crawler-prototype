@@ -1,6 +1,3 @@
-import Fetcher, { FetcherOptions } from './fetcher';
-import { extract } from './url';
-
 export enum TaskStatus {
     pending,
     running,
@@ -10,7 +7,7 @@ export enum TaskStatus {
 
 export interface Task {
     status: TaskStatus;
-    handle(task: Task): Promise<any>;
+    do(task: Task): Promise<any>;
     error?: Error;
     [prop: string]: any;
 }
@@ -18,10 +15,9 @@ export interface Task {
 export interface SchedulerOptions {
     depth?: number;
     parallelSize?: number;
-    requestOptions?: FetcherOptions;
     newTask?(...args: any[]): Task;
-    ondone?(document: string, task?: Task): any;
-    onerror?(error: Error, task?: Task): any;
+    onDone?(result: any, task?: Task): any;
+    onError?(error: Error, task?: Task): any;
     [prop: string]: any;
 }
 
@@ -35,8 +31,6 @@ export default class Scheduler {
     parallelSize!: number;
 
     depth?: number;
-
-    requestOptions?: FetcherOptions;
 
     visited: Set<string> = new Set;
 
@@ -58,33 +52,24 @@ export default class Scheduler {
         }));
     }
 
-    async runTask(task: Task) {
+    private async runTask(task: Task) {
         task.status = TaskStatus.running;
 
-        return new Promise((resolve, reject) => {
-            task.handle(task)
-            .then(async (document: Buffer) => {
-                const docString = (await document).toString();
-                task.status = TaskStatus.done;
+        try {
+            task.status = TaskStatus.done;
+            const result = await task.do(task);
 
-                extract(docString).forEach(url => {
-                    this.urlFilter(url) && !this.visited.has(url) && this.visited.add(url)
-                    && this.pendingTasks.push(
-                        this.newTask(url, task.depth + 1)
-                    );
-                });
+            await this.onDone(result, task);
+        } catch (error) {
+            task.status = TaskStatus.failed;
+            task.error = error;
 
-                await this.ondone(docString, task);
-                resolve(this.dispatch());
-            })
-            .catch(async (error: Error) => {
-                task.status = TaskStatus.failed;
-                task.error = error;
+            await this.onError(error, task);
+        }
 
-                await this.onerror(error, task);
-                resolve(this.dispatch());
-            });
-        });
+        await this.dispatch();
+
+        return;
     }
 
     destroy() {
@@ -99,30 +84,24 @@ export default class Scheduler {
     newTask(...args: any[]): Task {
         return {
             status: TaskStatus.pending,
-            handle: (task: Task) => new Promise(() => {}),
+            do: (task: Task) => new Promise(() => {}),
         };
     }
 
-    ondone(document: string, task: Task) {
+    onDone(result: any, task: Task) {
         ;
     }
 
-    onerror(error: Error, task: Task) {
+    onError(error: Error, task: Task) {
         ;
-    }
-
-    urlFilter(url: string): boolean {
-        return true;
     }
 
     private destructOptions(options: SchedulerOptions) {
-        ({
+        ;({
             depth: this.depth,
             parallelSize: this.parallelSize = 5,
-            requestOptions: this.requestOptions,
-            urlFilter: this.urlFilter,
-            ondone: this.ondone = this.ondone,
-            onerror: this.onerror = this.onerror,
+            onDone: this.onDone = this.onDone,
+            onError: this.onError = this.onError,
             newTask: this.newTask = this.newTask,
         } = options as any);
     }

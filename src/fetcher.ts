@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as https from 'https';
 import { EventEmitter } from 'events';
 
-import { URL2Object, URLObject, parse } from './url';
+import { URLObject, parse } from './url';
 
 export interface FetcherOptions extends https.RequestOptions {
     
@@ -44,7 +44,7 @@ export default class Fetcher extends EventEmitter {
         }
 
         this.request
-        .once('response', (response: http.IncomingMessage) => {
+        .on('response', (response: http.IncomingMessage) => {
             this.response = response;
             this.emit('response');
         })
@@ -53,12 +53,12 @@ export default class Fetcher extends EventEmitter {
             this.fetchCalled && this.emit('error', error) || this.errorBuffer.push(error);
         });
 
-        this.once('response', () => {
+        this.on('response', () => {
             this.response!
             .on('data', (chunk: Buffer) => {
                 this.buffer.push(chunk);
             })
-            .once('end', this.onResponseEnd.bind(this))
+            .on('end', this.onResponseEnd.bind(this))
             .on('error', (error) => {
                 this.fetchCalled && this.emit('error', error) || this.errorBuffer.push(error);
             });
@@ -75,7 +75,7 @@ export default class Fetcher extends EventEmitter {
         this.request.end();
 
         return new Promise<Buffer>((resolve, reject) => {
-            this.once('end', (buffer) => {
+            this.on('end', (buffer) => {
                 resolve(buffer);
             });
 
