@@ -16,6 +16,8 @@ let c = 1;
         },
     };
 
+    const visited = new Set<string>();
+
     function urlFilter(url: string): boolean {
         if (/\.(js)|(css)|(jpg)|(jpeg)|(gif)|(png)|(mp3)|(mp4)|(pdf)|(swf)$/.test(url)) {
             return false;
@@ -32,22 +34,21 @@ let c = 1;
     ], {
         depth: 2,
         newTask(url: string, depth: number = 0) {
-            return {
+            const task = {
                 url,
-                do: (task: Task) => {
-                    console.log(this)
-                    return task.fetcher.fetch()
-                },
+                do: () => task.fetcher.fetch(),
                 depth,
                 status: TaskStatus.pending,
                 fetcher: new Fetcher(url, requestOptions),
                 order: c++,
             };
+
+            return task;
         },
         onDone: async (document: Buffer, task: Task) => {
             const docString = (await document).toString();
             u.extract(docString).forEach(url => {
-                urlFilter(url) && !schd.visited.has(url) && schd.visited.add(url)
+                url && urlFilter(url) && !visited.has(url) && visited.add(url)
                 && schd.pendingTasks.push(
                     schd.newTask(url, task.depth + 1)
                 );

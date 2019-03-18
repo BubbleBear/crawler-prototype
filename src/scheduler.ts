@@ -7,7 +7,7 @@ export enum TaskStatus {
 
 export interface Task {
     status: TaskStatus;
-    do(task: Task): Promise<any>;
+    do(): Promise<any>;
     error?: Error;
     [prop: string]: any;
 }
@@ -32,8 +32,6 @@ export default class Scheduler {
 
     depth?: number;
 
-    visited: Set<string> = new Set;
-
     constructor(seeds: string[], options: SchedulerOptions = {}) {
         this.destructOptions(options);
         this.pendingTasks = seeds.map(url => this.newTask(url));
@@ -57,7 +55,7 @@ export default class Scheduler {
 
         try {
             task.status = TaskStatus.done;
-            const result = await task.do(task);
+            const result = await task.do();
 
             await this.onDone(result, task);
         } catch (error) {
@@ -84,7 +82,7 @@ export default class Scheduler {
     newTask(...args: any[]): Task {
         return {
             status: TaskStatus.pending,
-            do: (task: Task) => new Promise(() => {}),
+            do: () => new Promise(() => {}),
         };
     }
 
