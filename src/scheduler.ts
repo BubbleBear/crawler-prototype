@@ -1,3 +1,5 @@
+import { LinkedList } from './list';
+
 export enum TaskStatus {
     pending,
     running,
@@ -22,26 +24,22 @@ export interface SchedulerOptions {
 }
 
 export default class Scheduler {
-    pendingTasks: Task[] = [];
+    pendingTasks: LinkedList<Task> = new LinkedList();
 
-    runningTasks: Task[] = [];
+    runningTasks: LinkedList<Task> = new LinkedList();
 
-    failedTasks: Task[] = [];
+    failedTasks: LinkedList<Task> = new LinkedList();
 
     parallelSize!: number;
 
-    depth?: number;
-
     constructor(seeds: string[], options: SchedulerOptions = {}) {
         this.destructOptions(options);
-        this.pendingTasks = seeds.map(url => this.newTask(url));
+        this.pendingTasks = LinkedList.fromArray(seeds.map(url => this.newTask(url)));
     }
 
     public async dispatch(count: number = this.parallelSize, offset: number = 0) {
-        this.runningTasks = this.runningTasks.filter(task => task.status === TaskStatus.running);
+        this.runningTasks.forEach(node => (node.value.status === TaskStatus.running) || node.delete());
 
-        this.pendingTasks = this.pendingTasks.filter(task => typeof this.depth === 'number' && task.depth < this.depth || true)
-        
         const todoTasks = this.pendingTasks.splice(offset, count - this.runningTasks.length);
 
         return Promise.all(todoTasks.map(task => {
@@ -71,7 +69,7 @@ export default class Scheduler {
     }
 
     destroy() {
-        this.pendingTasks = [];
+        this.pendingTasks.destroy();
         this.dispatch = (...args: any[]) => {
             return new Promise((resolve) => {
                 resolve(true as any);
