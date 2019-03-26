@@ -5,10 +5,17 @@ import * as fs from 'fs';
 import { createHash } from 'crypto';
 import { exec } from 'child_process';
 
-let c = 1;
+import heapdump from 'heapdump';
 
 ;(async () => {
+    await exec(`rm ${__dirname}/../heapdump/*`);
     await exec(`rm ${__dirname}/../data/*`);
+
+    let c = 1;
+
+    setInterval(() => {
+        heapdump.writeSnapshot(`${__dirname}/../heapdump/${Date.now()}.heapsnapshot`);
+    }, 10000);
 
     const requestOptions = {
         timeout: 3000,
@@ -63,7 +70,7 @@ let c = 1;
             console.log(schd.failedTasks.length)
             console.log('\n')
             // fs.writeFileSync(`./data/${createHash('md5').update(task.url).digest('hex')}`, document);
-            fs.writeFileSync(`./data/${task.order}`, document);
+            // fs.writeFileSync(`./data/${task.order}`, document);
             await Promise.resolve(((resolve: any) => {
                 setTimeout(() => {
                     resolve(true)

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "npx ts-node ./src/",
-    "dev": "node --inspect=9225 -r ts-node/register src/index.ts",
+    "dev": "ts-node src/index.ts",
+    "debug": "node --inspect=9225 -r ts-node/register src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,7 +15,9 @@
     "directory-scanner": "^1.0.2"
   },
   "devDependencies": {
+    "@types/heapdump": "^0.3.1",
     "@types/node": "^10.12.15",
+    "heapdump": "^0.3.12",
     "ts-node": "^7.0.1",
     "typescript": "^3.2.2"
   }
