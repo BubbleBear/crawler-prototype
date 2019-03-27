@@ -77,7 +77,7 @@ export class LinkedList<T> implements List<T> {
     }
 
     public empty(): boolean {
-        return this._head === this._tail;
+        return !this._length;
     }
 
     public push(value: T): LinkedList<T> {

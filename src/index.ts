@@ -13,9 +13,9 @@ import heapdump from 'heapdump';
 
     let c = 1;
 
-    setInterval(() => {
-        heapdump.writeSnapshot(`${__dirname}/../heapdump/${Date.now()}.heapsnapshot`);
-    }, 10000);
+    // setInterval(() => {
+    //     heapdump.writeSnapshot(`${__dirname}/../heapdump/${Date.now()}.heapsnapshot`);
+    // }, 10000);
 
     const requestOptions = {
         timeout: 3000,
@@ -39,12 +39,10 @@ import heapdump from 'heapdump';
         // 'http://shop.test.9now.net',
         'http://sports.sina.com.cn/',
     ], {
-        depth: 2,
-        newTask(url: string, depth: number = 0) {
+        newTask(url: string) {
             const task = {
                 url,
                 do: () => task.fetcher.fetch(),
-                depth,
                 status: TaskStatus.pending,
                 fetcher: new Fetcher(url, requestOptions),
                 order: c++,
@@ -57,14 +55,13 @@ import heapdump from 'heapdump';
             u.extract(docString).forEach(url => {
                 url && urlFilter(url) && !visited.has(url) && visited.add(url)
                 && schd.pendingTasks.push(
-                    schd.newTask(url, task.depth + 1)
+                    schd.newTask(url)
                 );
             });
 
             console.log(task.url)
             console.log((task.fetcher as Fetcher).request.connection.remoteAddress)
             console.log(task.order)
-            console.log(task.depth)
             console.log(schd.pendingTasks.length)
             console.log(schd.runningTasks.length)
             console.log(schd.failedTasks.length)
@@ -81,7 +78,6 @@ import heapdump from 'heapdump';
             console.log(task.url, error);
             console.log((task.fetcher as Fetcher).request.connection.remoteAddress)
             console.log(task.order)
-            console.log(task.depth)
             console.log(schd.pendingTasks.length)
             console.log(schd.runningTasks.length)
             console.log(schd.failedTasks.length)
@@ -96,5 +92,7 @@ import heapdump from 'heapdump';
 
     await schd.dispatch();
 
-    console.log('all done')
+    console.log('all done');
+
+    return;
 })()

@@ -1,3 +1,5 @@
+import { EventEmitter } from 'events';
+
 import { LinkedList } from './list';
 
 export enum TaskStatus {
@@ -15,7 +17,6 @@ export interface Task {
 }
 
 export interface SchedulerOptions {
-    depth?: number;
     parallelSize?: number;
     newTask?(...args: any[]): Task;
     onDone?(result: any, task?: Task): any;
@@ -23,7 +24,7 @@ export interface SchedulerOptions {
     [prop: string]: any;
 }
 
-export default class Scheduler {
+export default class Scheduler extends EventEmitter {
     pendingTasks: LinkedList<Task> = new LinkedList();
 
     runningTasks: LinkedList<Task> = new LinkedList();
@@ -33,19 +34,32 @@ export default class Scheduler {
     parallelSize!: number;
 
     constructor(seeds: string[], options: SchedulerOptions = {}) {
+        super();
+
         this.destructOptions(options);
         this.pendingTasks = LinkedList.fromArray(seeds.map(url => this.newTask(url)));
     }
 
-    public async dispatch(count: number = this.parallelSize, offset: number = 0) {
+    public async dispatch() {
+        this.schedule();
+
+        while (!this.runningTasks.empty()) {
+            this.runningTasks.forEach(node => node.value.status !== TaskStatus.running && this.runTask(node.value));
+
+            await new Promise((resolve) => {
+                this.once('dispatch', resolve);
+            });
+        }
+
+        console.log(this.runningTasks.empty())
+    }
+
+    private schedule(offset: number = 0) {
         this.runningTasks.forEach(node => (node.value.status === TaskStatus.running) || node.delete());
 
-        const todoTasks = this.pendingTasks.splice(offset, count - this.runningTasks.length);
+        const todoTasks = this.pendingTasks.splice(offset, this.parallelSize - this.runningTasks.length);
 
-        return Promise.all(todoTasks.map(task => {
-            this.runningTasks.push(task);
-            return this.runTask(task);
-        }));
+        todoTasks.forEach(node => this.runningTasks.push(node.value));
     }
 
     private async runTask(task: Task) {
@@ -63,7 +77,9 @@ export default class Scheduler {
             await this.onError(error, task);
         }
 
-        await this.dispatch();
+        this.schedule();
+
+        this.emit('dispatch');
 
         return;
     }
@@ -94,7 +110,6 @@ export default class Scheduler {
 
     private destructOptions(options: SchedulerOptions) {
         ;({
-            depth: this.depth,
             parallelSize: this.parallelSize = 5,
             onDone: this.onDone = this.onDone,
             onError: this.onError = this.onError,
