@@ -33,11 +33,10 @@ export default class Scheduler extends EventEmitter {
 
     parallelSize!: number;
 
-    constructor(seeds: string[], options: SchedulerOptions = {}) {
+    constructor(options: SchedulerOptions = {}) {
         super();
 
         this.destructOptions(options);
-        this.pendingTasks = LinkedList.fromArray(seeds.map(url => this.newTask(url)));
     }
 
     public async dispatch() {
@@ -50,8 +49,6 @@ export default class Scheduler extends EventEmitter {
                 this.once('dispatch', resolve);
             });
         }
-
-        console.log(this.runningTasks.empty())
     }
 
     private schedule(offset: number = 0) {

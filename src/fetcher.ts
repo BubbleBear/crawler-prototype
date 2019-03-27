@@ -15,7 +15,7 @@ export default class Fetcher extends EventEmitter {
 
     response!: http.IncomingMessage;
 
-    options?: FetcherOptions;
+    private options?: FetcherOptions;
 
     private buffer: Buffer[] = [];
 
@@ -27,6 +27,7 @@ export default class Fetcher extends EventEmitter {
 
         this.on('request', () => {
             this.request!
+                .setTimeout(3000)
                 .on('response', (response: http.IncomingMessage) => {
                     this.response = response;
                     this.emit('response');

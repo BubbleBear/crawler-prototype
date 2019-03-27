@@ -1,7 +1,8 @@
 import { URL } from 'url';
 
 const defaultPatterns = [
-    /(?:")(https?:)?\/\/[\w\$\-\_\.\+\!\*\'\(\)\,\;\/\?\:\@\=\&]+(?=")/g,
+    // /(?:")(https?:)?\/\/[\w\$\-\_\.\+\!\*\'\(\)\,\;\/\?\:\@\=\&]+(?=")/g,
+    /(?<=<a.+href\s*=\s*")([^"]*)(?=")/g,
 ];
 
 export interface URLObject {
@@ -18,7 +19,7 @@ export interface URLObject {
     username?: string;
     auth?: string;
     path?: string;
-    [x: string]: any;
+    [prop: string]: any;
 }
 
 export function extract(document: string, patterns: Array<RegExp> = defaultPatterns): Array<string> {
@@ -26,8 +27,8 @@ export function extract(document: string, patterns: Array<RegExp> = defaultPatte
         patterns
             .map(reg => document.match(reg))
             .reduce((acc: Array<string>, cur) => {
-                cur && (acc = acc.concat(cur))
-                return acc
+                cur && (acc = acc.concat(cur));
+                return acc;
             }, [])
             .map(matches => matches.replace('"', ''))
             .map(url => url.replace(/^(?=\/\/)/, 'http:'));
@@ -35,17 +36,19 @@ export function extract(document: string, patterns: Array<RegExp> = defaultPatte
     return urls;
 }
 
-export function parse(url: string | URL | URLObject): URLObject {
+export function parse(url: string | URL | URLObject, defaultHost?: string): URLObject {
     let object: URLObject;
 
     if (typeof url === 'string') {
-        const rough = analyze(url);
+        const matches = analyze(url);
 
         object = {
-            href: rough[0],
-            protocol: rough[1],
-            host: rough[2],
-            path: rough[3],
+            href: matches[0],
+            protocol: matches[1],
+            hostname: matches[2],
+            port: matches[3],
+            path: matches[4],
+            host: `${matches[2]}${matches[3] && ':' + matches[3] || ''}`,
         };
     } else if (url instanceof URL) {
         object = URL2Object(url);
@@ -53,9 +56,9 @@ export function parse(url: string | URL | URLObject): URLObject {
         object = url;
     }
 
-    return Object.keys(object).reduce((cur, key) => {
-        object[key] && (cur[key] = object[key]);
-        return cur;
+    return Object.keys(object).reduce((acc, key) => {
+        object[key] && (acc[key] = object[key]);
+        return acc;
     }, {} as URLObject);
 }
 
@@ -78,11 +81,37 @@ export function URL2Object(url: URL): URLObject {
 }
 
 function analyze(urllike: string) {
-    const matches = urllike.match(/^(https?:)?(?:\/\/)?([^\/]+)?(\/.*)?$/);
+    const matches = urllike.match(/^(https?:)?(?:\/\/)?([^:\/]+)?(?::)?([^\/]+)?(\/.*)?$/);
 
     if (matches === null) {
         throw new TypeError();
     }
 
     return matches;
+}
+
+if (require.main === module) {
+    const a = 'localhost:4000';
+
+    const b = parse(a);
+
+    console.log(b);
+
+    const c = 'https://www.incnjp.com/forum.php';
+
+    const d = parse(c);
+
+    console.log(d);
+
+    const e = '/en/intro/';
+
+    const f = parse(e);
+
+    console.log(f);
+
+    const g = '<a class="btn btn-primary" href="/en/intro/quickstart.html">Get Started</a>';
+
+    const h = defaultPatterns[0][Symbol.match](g);
+
+    console.log(h);
 }
