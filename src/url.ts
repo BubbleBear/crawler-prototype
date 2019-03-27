@@ -1,7 +1,6 @@
 import { URL } from 'url';
 
 const defaultPatterns = [
-    // /(?:")(https?:)?\/\/[\w\$\-\_\.\+\!\*\'\(\)\,\;\/\?\:\@\=\&]+(?=")/g,
     /(?<=<a.+href\s*=\s*")([^"]*)(?=")/g,
 ];
 
@@ -22,21 +21,26 @@ export interface URLObject {
     [prop: string]: any;
 }
 
-export function extract(document: string, patterns: Array<RegExp> = defaultPatterns): Array<string> {
+export function extract(document: string, defaultHost?: string, patterns: Array<RegExp> = defaultPatterns): Array<string> {
     const urls =
         patterns
-            .map(reg => document.match(reg))
-            .reduce((acc: Array<string>, cur) => {
+            .map(reg => document.match(reg)!)
+            .reduce((acc, cur) => {
                 cur && (acc = acc.concat(cur));
                 return acc;
             }, [])
-            .map(matches => matches.replace('"', ''))
-            .map(url => url.replace(/^(?=\/\/)/, 'http:'));
+            .map(url => {
+                let obj = parse(url);
+
+                obj.host || defaultHost && (obj = Object.assign(obj, parse(defaultHost)));
+
+                return url;
+            });
 
     return urls;
 }
 
-export function parse(url: string | URL | URLObject, defaultHost?: string): URLObject {
+export function parse(url: string | URL | URLObject): URLObject {
     let object: URLObject;
 
     if (typeof url === 'string') {
@@ -48,7 +52,7 @@ export function parse(url: string | URL | URLObject, defaultHost?: string): URLO
             hostname: matches[2],
             port: matches[3],
             path: matches[4],
-            host: `${matches[2]}${matches[3] && ':' + matches[3] || ''}`,
+            host: matches[2] && `${matches[2]}${matches[3] && ':' + matches[3] || ''}`,
         };
     } else if (url instanceof URL) {
         object = URL2Object(url);

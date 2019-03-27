@@ -9,13 +9,15 @@ import Scheduler, { Task, TaskStatus } from './scheduler';
 import { LinkedList } from './list';
 import { URLObject, parse } from './url';
 
-;(async () => {
+!async function() {
     await exec(`rm ${__dirname}/../heapdump/*`);
     await exec(`rm ${__dirname}/../data/*`);
 
-    let c = 1;
+    const seed = '0.0.0.0:4000';
 
-    let host = '';
+    const host = parse(seed).hostname;
+
+    let c = 1;
 
     // setInterval(() => {
     //     heapdump.writeSnapshot(`${__dirname}/../heapdump/${Date.now()}.heapsnapshot`);
@@ -101,10 +103,6 @@ import { URLObject, parse } from './url';
         },
     });
 
-    const seed = '0.0.0.0:4000';
-
-    host = parse(seed).hostname!;
-
     schd.pendingTasks.push(schd.newTask(seed));
 
     await schd.dispatch();
@@ -112,4 +110,4 @@ import { URLObject, parse } from './url';
     console.log('all done');
 
     return;
-})()
+}()

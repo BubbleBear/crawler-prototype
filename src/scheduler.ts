@@ -75,9 +75,7 @@ export default class Scheduler extends EventEmitter {
         }
 
         this.schedule();
-
         this.emit('dispatch');
-
         return;
     }
 
