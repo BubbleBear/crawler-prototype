@@ -129,7 +129,7 @@ if (require.main === module) {
                 // console.log('failed length: ', schd.failedTasks.length)
                 console.log(n)
 
-                schd.pendingTasks.push(schd.newTask(n + 3));
+                schd.pendingTasks.push(schd.newTask(n + 5));
 
                 await new Promise(r => {
                     setTimeout(() => {
