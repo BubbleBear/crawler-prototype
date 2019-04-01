@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import * as fs from 'fs';
 
-import heapdump from 'heapdump';
+// import heapdump from 'heapdump';
 
 import Fetcher, { FetcherOptions } from './fetcher';
 import * as u from './url';
@@ -65,9 +65,7 @@ import { URLObject, parse } from './url';
             u.extract(docString).forEach(url => {
                 console.log(url)
                 url && urlFilter(url) && !visited.has(url) && visited.add(url)
-                && schd.pendingTasks.push(
-                    schd.newTask(url, task.depth + 1)
-                );
+                && schd.push(url, task.depth + 1);
             });
 
             console.log('url: ', task.url)
@@ -76,7 +74,6 @@ import { URLObject, parse } from './url';
             console.log('depth: ', task.depth)
             console.log('pending length: ', schd.pendingTasks.length)
             console.log('running length: ', schd.runningTasks.length)
-            console.log('failed length: ', schd.failedTasks.length)
             console.log('\n')
             // fs.writeFileSync(`./data/${createHash('md5').update(task.url).digest('hex')}`, document);
             fs.writeFileSync(`./data/${task.id}`, document);
@@ -93,7 +90,6 @@ import { URLObject, parse } from './url';
             console.log('depth: ', task.depth)
             console.log('pending length: ', schd.pendingTasks.length)
             console.log('running length: ', schd.runningTasks.length)
-            console.log('failed length: ', schd.failedTasks.length)
             console.log('\n')
             await new Promise((resolve: any) => {
                 setTimeout(() => {
@@ -103,7 +99,7 @@ import { URLObject, parse } from './url';
         },
     });
 
-    schd.pendingTasks.push(schd.newTask(seed));
+    schd.push(seed);
 
     await schd.dispatch();
 
