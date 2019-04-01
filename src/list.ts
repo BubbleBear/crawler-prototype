@@ -116,6 +116,19 @@ export class LinkedList<T> implements List<T> {
         return this;
     }
 
+    public map<S>(callback: (node: Node<T>) => S): LinkedList<S> {
+        const mapping = new LinkedList<S>();
+        let cursor = this.head;
+
+        while (cursor) {
+            const next = cursor.next;
+            mapping.push(callback(cursor));
+            cursor = next;
+        }
+
+        return mapping;
+    }
+
     public splice(start: number, deleteCount: number): LinkedList<T> {
         const linkedList = new LinkedList<T>();
         let cursor = this.head;

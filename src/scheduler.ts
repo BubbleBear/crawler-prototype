@@ -29,8 +29,6 @@ export default class Scheduler extends EventEmitter {
 
     runningTasks: LinkedList<Task> = new LinkedList();
 
-    failedTasks: LinkedList<Task> = new LinkedList();
-
     parallelSize!: number;
 
     constructor(options: SchedulerOptions = {}) {
@@ -49,6 +47,18 @@ export default class Scheduler extends EventEmitter {
                 this.once('dispatch', resolve);
             });
         }
+    }
+
+    public push(...args: any[]) {
+        const newTask = this.newTask(...args);
+        this.pendingTasks.push(newTask);
+
+        return this;
+    }
+
+    public destroy() {
+        this.pendingTasks.destroy();
+        this.schedule = () => {};
     }
 
     private schedule(offset: number = 0) {
@@ -76,30 +86,20 @@ export default class Scheduler extends EventEmitter {
 
         this.schedule();
         this.emit('dispatch');
-        return;
     }
 
-    destroy() {
-        this.pendingTasks.destroy();
-        this.dispatch = (...args: any[]) => {
-            return new Promise((resolve) => {
-                resolve(true as any);
-            });
-        };
-    }
-
-    newTask(...args: any[]): Task {
+    private newTask(...args: any[]): Task {
         return {
             status: TaskStatus.pending,
             do: () => new Promise(() => {}),
         };
     }
 
-    onDone(result: any, task: Task) {
+    private onDone(result: any, task: Task) {
         ;
     }
 
-    onError(error: Error, task: Task) {
+    private onError(error: Error, task: Task) {
         ;
     }
 
@@ -124,12 +124,14 @@ if (require.main === module) {
                 };
             },
             async onDone(n, task) {
+                console.log(n)
                 // console.log('pending length: ', schd.pendingTasks.length)
                 // console.log('running length: ', schd.runningTasks.length)
-                // console.log('failed length: ', schd.failedTasks.length)
-                console.log(n)
+                console.log('pending: ', schd.pendingTasks.map(node => node.value.status.toString()).toArray().join(', '));
+                console.log('running: ', schd.runningTasks.map(node => node.value.status.toString()).toArray().join(', '));
+                console.log('\n');
 
-                schd.pendingTasks.push(schd.newTask(n + 5));
+                schd.push(n + 5);
 
                 await new Promise(r => {
                     setTimeout(() => {
@@ -140,7 +142,7 @@ if (require.main === module) {
         });
     
         Array(5).fill(0).forEach((_, k) => {
-            schd.pendingTasks.push(schd.newTask(k));
+            schd.push(k);
         });
     
         await schd.dispatch();
