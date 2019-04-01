@@ -43,49 +43,34 @@ export default class Scheduler extends EventEmitter {
         this.schedule();
 
         while (!this.runningTasks.empty()) {
-            this.runningTasks.forEach(node => node.value.status !== TaskStatus.running && this.runTask(node.value));
-
-            console.log('running before dispatch', this.runningTasks.length)
+            this.runningTasks.forEach(node => node.value.status < TaskStatus.running && this.runTask(node.value));
 
             await new Promise((resolve) => {
                 this.once('dispatch', resolve);
             });
-
-            console.log(4)
-
-            console.log('running after dispatch', this.runningTasks.length)
         }
     }
 
     private schedule(offset: number = 0) {
-        console.log(1)
-        this.runningTasks.forEach(node => (node.value.status === TaskStatus.running) || node.delete());
-
-        console.log('pending before schedule', this.pendingTasks.length)
-        // console.log(this.runningTasks.length)
+        this.runningTasks.forEach(node => node.value.status > TaskStatus.running && node.delete());
 
         const todoTasks = this.pendingTasks.splice(offset, this.parallelSize - this.runningTasks.length);
-
-        console.log('todo', todoTasks.length)
-        console.log('pending after schedule', this.pendingTasks.length)
 
         todoTasks.forEach(node => this.runningTasks.push(node.value));
     }
 
     private async runTask(task: Task) {
-        console.log(2)
         task.status = TaskStatus.running;
 
         try {
             const result = await task.do();
             task.status = TaskStatus.done;
-            console.log(3)
-
+            
             await this.onDone(result, task);
         } catch (error) {
             task.error = error;
             task.status = TaskStatus.failed;
-
+            
             await this.onError(error, task);
         }
 
@@ -131,7 +116,7 @@ export default class Scheduler extends EventEmitter {
 if (require.main === module) {
     !async function() {
         const schd = new Scheduler({
-            parallelSize: 10,
+            parallelSize: 3,
             newTask(n) {
                 return {
                     status: TaskStatus.pending,
@@ -142,8 +127,9 @@ if (require.main === module) {
                 // console.log('pending length: ', schd.pendingTasks.length)
                 // console.log('running length: ', schd.runningTasks.length)
                 // console.log('failed length: ', schd.failedTasks.length)
+                console.log(n)
 
-                schd.pendingTasks.push(schd.newTask(n + 10));
+                schd.pendingTasks.push(schd.newTask(n + 3));
 
                 await new Promise(r => {
                     setTimeout(() => {
@@ -153,7 +139,7 @@ if (require.main === module) {
             }
         });
     
-        Array(20).fill(0).forEach((_, k) => {
+        Array(5).fill(0).forEach((_, k) => {
             schd.pendingTasks.push(schd.newTask(k));
         });
     
