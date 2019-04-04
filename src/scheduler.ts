@@ -18,7 +18,7 @@ export interface Task {
 
 export interface SchedulerOptions {
     parallelSize?: number;
-    newTask?(...args: any[]): Task;
+    newTask?(...args: any[]): Task | Promise<Task>;
     onDone?(result: any, task?: Task): any;
     onError?(error: Error, task?: Task): any;
     [prop: string]: any;
@@ -51,6 +51,13 @@ export default class Scheduler extends EventEmitter {
 
     public push(...args: any[]) {
         const newTask = this.newTask(...args);
+        this.pendingTasks.push(newTask);
+
+        return this;
+    }
+
+    public async asyncPush(...args: any[]) {
+        const newTask = await this.newTask(...args);
         this.pendingTasks.push(newTask);
 
         return this;
@@ -117,7 +124,7 @@ if (require.main === module) {
     !async function() {
         const schd = new Scheduler({
             parallelSize: 3,
-            newTask(n) {
+            async newTask(n) {
                 return {
                     status: TaskStatus.pending,
                     do: async () => await n,
@@ -131,7 +138,7 @@ if (require.main === module) {
                 console.log('running: ', schd.runningTasks.map(node => node.value.status.toString()).toArray().join(', '));
                 console.log('\n');
 
-                schd.push(n + 5);
+                await schd.asyncPush(n + 5);
 
                 await new Promise(r => {
                     setTimeout(() => {
@@ -141,9 +148,9 @@ if (require.main === module) {
             }
         });
     
-        Array(5).fill(0).forEach((_, k) => {
-            schd.push(k);
-        });
+        await Promise.all(Array(5).fill(0).map(async (_, k) => {
+            return await schd.asyncPush(k);
+        }));
     
         await schd.dispatch();
     }()
