@@ -65,7 +65,6 @@ export default class Scheduler extends EventEmitter {
 
     public destroy() {
         this.pendingTasks.destroy();
-        this.schedule = () => {};
     }
 
     private schedule(offset: number = 0) {
@@ -136,15 +135,20 @@ if (require.main === module) {
                 // console.log('running length: ', schd.runningTasks.length)
                 console.log('pending: ', schd.pendingTasks.map(node => node.value.status.toString()).toArray().join(', '));
                 console.log('running: ', schd.runningTasks.map(node => node.value.status.toString()).toArray().join(', '));
-                console.log('\n');
+                // console.log('\n');
 
-                await schd.asyncPush(n + 5);
+                // await schd.asyncPush(n + 5);
 
-                await new Promise(r => {
-                    setTimeout(() => {
-                        r();
-                    }, 1000);
-                })
+                // await new Promise(r => {
+                //     setTimeout(() => {
+                //         r();
+                //     }, 1000);
+                // })
+
+                schd.destroy();
+            },
+            async onError(e) {
+                console.log(e);
             }
         });
     
@@ -153,5 +157,7 @@ if (require.main === module) {
         }));
     
         await schd.dispatch();
+
+        console.log('all done');
     }()
 }
